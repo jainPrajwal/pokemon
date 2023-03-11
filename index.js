@@ -12,6 +12,22 @@ pelletTownImageSource.src = `./images/Pellet Town Zoomed.png`;
 const playerImage = new Image();
 playerImage.src = "./images/playerDown.png";
 
+let lastKeyPressed = null;
+let shouldIncreaseSpeed = false;
+const keys = {
+  leftNavigation: {
+    pressed: false,
+  },
+  rightNavigation: {
+    pressed: false,
+  },
+  upNavigation: {
+    pressed: false,
+  },
+  downNavigation: {
+    pressed: false,
+  },
+};
 
 /**
  * Listen to keydown event on w,a,s,d
@@ -29,9 +45,9 @@ class Sprite {
     this.image = image;
   }
 
-  // 
+  //
   draw() {
-    context.drawImage(this.image, -735, -600);
+    context.drawImage(this.image, this.position.x, this.position.y);
   }
 }
 
@@ -40,13 +56,13 @@ const backgroundSprite = new Sprite({
     x: -735,
     y: -600,
   },
-  image: pelletTownImageSource
+  image: pelletTownImageSource,
 });
 
 function animate() {
   requestAnimationFrame(animate);
 
-  backgroundSprite.draw()
+  backgroundSprite.draw();
   context.drawImage(
     playerImage,
     0, // from left corner
@@ -58,6 +74,104 @@ function animate() {
     playerImage.width / 4, // what should be the width of the rendered image
     playerImage.height // what should be the height of the rendered image
   );
+
+  if (
+    keys.upNavigation.pressed &&
+    (lastKeyPressed === `w` || lastKeyPressed === `ArrowUp`)
+  ) {
+    if (shouldIncreaseSpeed) {
+      backgroundSprite.position.y += 10;
+    } else {
+      backgroundSprite.position.y += 5;
+    }
+  } else if (
+    keys.downNavigation.pressed &&
+    (lastKeyPressed === `s` || lastKeyPressed === `ArrowDown`)
+  ) {
+    if (shouldIncreaseSpeed) {
+      backgroundSprite.position.y -= 10;
+    } else {
+      backgroundSprite.position.y -= 5;
+    }
+  } else if (
+    keys.leftNavigation.pressed &&
+    (lastKeyPressed === `a` || lastKeyPressed === `ArrowLeft`)
+  ) {
+    if (shouldIncreaseSpeed) {
+      backgroundSprite.position.x += 10;
+    } else {
+      backgroundSprite.position.x += 5;
+    }
+  } else if (
+    keys.rightNavigation.pressed &&
+    (lastKeyPressed === `d` || lastKeyPressed === `ArrowRight`)
+  ) {
+    if (shouldIncreaseSpeed) {
+      backgroundSprite.position.x -= 10;
+    } else {
+      backgroundSprite.position.x -= 5;
+    }
+  }
 }
 
 animate();
+
+window.addEventListener("keydown", function (event) {
+  switch (event.key) {
+    case `w`:
+      lastKeyPressed = `w`;
+    case `ArrowUp`:
+      keys.upNavigation.pressed = true;
+      lastKeyPressed = `ArrowUp`;
+      break;
+    case `a`:
+      lastKeyPressed = `a`;
+    case `ArrowLeft`:
+      lastKeyPressed = `ArrowLeft`;
+      keys.leftNavigation.pressed = true;
+      break;
+    case `s`:
+      lastKeyPressed = `s`;
+    case `ArrowDown`:
+      lastKeyPressed = `ArrowDown`;
+      keys.downNavigation.pressed = true;
+      break;
+    case `d`:
+      lastKeyPressed = `d`;
+    case `ArrowRight`:
+      lastKeyPressed = `ArrowRight`;
+      keys.rightNavigation.pressed = true;
+      break;
+
+    case `Shift`:
+      shouldIncreaseSpeed = true;
+    default:
+      console.error(`no function associated with the key `, event.key);
+  }
+});
+
+window.addEventListener("keyup", function (event) {
+  switch (event.key) {
+    case `w`:
+    case `ArrowUp`:
+      keys.upNavigation.pressed = false;
+      break;
+    case `a`:
+    case `ArrowLeft`:
+      keys.leftNavigation.pressed = false;
+      break;
+    case `s`:
+    case `ArrowDown`:
+      keys.downNavigation.pressed = false;
+      break;
+    case `d`:
+    case `ArrowRight`:
+      keys.rightNavigation.pressed = false;
+      break;
+
+    case `Shift`:
+      shouldIncreaseSpeed = false;
+    default:
+      console.error(`no function associated with the key `, event.key);
+  }
+});
