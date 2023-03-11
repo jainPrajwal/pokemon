@@ -11,8 +11,42 @@ const pelletTownImageSource = new Image();
 pelletTownImageSource.src = `./images/Pellet Town Zoomed.png`;
 const playerImage = new Image();
 playerImage.src = "./images/playerDown.png";
-pelletTownImageSource.onload = () => {
-  context.drawImage(pelletTownImageSource, -735, -600);
+
+
+/**
+ * Listen to keydown event on w,a,s,d
+ * Then need to add an animation loop which can change our image coordinates and each time the coordinates change we will go through a new iteration of the loop and whenever we enter a new frame
+ * if our images have different coordinates its going to give off the illusion that the player or the backgrounf image is moving
+ *
+ *
+ * Create a new function animate
+ */
+
+class Sprite {
+  constructor({ position, velocity, image }) {
+    this.position = position;
+    this.velocity = velocity;
+    this.image = image;
+  }
+
+  // 
+  draw() {
+    context.drawImage(this.image, -735, -600);
+  }
+}
+
+const backgroundSprite = new Sprite({
+  position: {
+    x: -735,
+    y: -600,
+  },
+  image: pelletTownImageSource
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  backgroundSprite.draw()
   context.drawImage(
     playerImage,
     0, // from left corner
@@ -24,20 +58,6 @@ pelletTownImageSource.onload = () => {
     playerImage.width / 4, // what should be the width of the rendered image
     playerImage.height // what should be the height of the rendered image
   );
-};
-
-/**
- * Listen to keydown event on w,a,s,d
- * Then need to add an animation loop which can change our image coordinates and each time the coordinates change we will go through a new iteration of the loop and whenever we enter a new frame
- * if our images have different coordinates its going to give off the illusion that the player or the backgrounf image is moving
- *
- *
- * Create a new function animate
- */
-
-function animate() {
-  console.log(`animate`);
-  requestAnimationFrame(animate)
 }
 
 animate();
