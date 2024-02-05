@@ -18,7 +18,7 @@ class Boundary {
   }
 
   draw() {
-    context.fillStyle = `transparent`;
+    context.fillStyle = `red`;
     context.fillRect(
       this.position.x,
       this.position.y,
@@ -123,8 +123,8 @@ class Sprite {
 
 const playerSprite = new Sprite({
   position: {
-    x: canvas.width / 2 - playerImage.width / 4 / 2, // start rendering the image in canvas from middle of the canvas screen
-    y: canvas.height / 2 - playerImage.height / 2,
+    x: canvas.width / 2 - 192 / 4 / 2, // start rendering the image in canvas from middle of the canvas screen
+    y: canvas.height / 2 - 68 / 2,
   },
   image: playerImage,
   frames: {
@@ -178,6 +178,14 @@ function detectRectangularCollisions({ player, boundary }) {
 
   return areTwoObjectsColliding;
 }
+function rectangularCollisions({ player, boundary }) {
+  return (
+    player.position.x + player.width >= boundary.position.x &&
+    player.position.x <= boundary.position.x + boundary.width &&
+    player.position.y <= boundary.position.y + boundary.height &&
+    player.position.y + player.height >= boundary.position.y
+  );
+}
 
 function animate() {
   requestAnimationFrame(animate);
@@ -189,78 +197,101 @@ function animate() {
   });
   // testBoundary.draw();
   playerSprite.draw();
-
+  let playerColliding = false;
   if (
     keys.upNavigation.pressed &&
     (lastKeyPressed === `w` || lastKeyPressed === `ArrowUp`)
   ) {
-    let isPlayerColliding = false;
-
-    for (let i = 0; i < boundaries.length; i++) {
-      if (isPlayerColliding) {
-        break; // if player is colliding, then break out of the loop. We dont need to check with each other boundary if the player is colliding. At a time a player can only collide with one boundary and we have got that. So break.
-      } else {
-        const currentBoundary = boundaries[i];
-        const params = {
-          player: playerSprite,
-          boundary: {
-            ...currentBoundary,
-            position: {
-              x: currentBoundary.position.x,
-              y: currentBoundary.position.y + 5,
-            },
-          },
-        };
-
-        if (detectRectangularCollisions(params)) {
-          console.log("colliding");
-          isPlayerColliding = true;
-          break;
+    const getDisplacement =
+      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (movable) => {
+        let displacement = (movable.position.y += byUnits.slow);
+        if (shouldIncreaseSpeed) {
+          displacement = movable.position.y += byUnits.fast;
         }
-      }
-    }
-    if (!isPlayerColliding) {
-      if (shouldIncreaseSpeed) {
-        movablesList.forEach((movable) => (movable.position.y += 10));
-        // backgroundSprite.position.y += 10;
-      } else {
-        movablesList.forEach((movable) => (movable.position.y += 5));
-        // backgroundSprite.position.y += 5;
-      }
-    }
+        return displacement;
+      };
+    navigate({
+      boundaries,
+      movablesList,
+      shouldIncreaseSpeed,
+      playerSprite,
+      direction: "up",
+      getDisplacement,
+    });
   } else if (
     keys.downNavigation.pressed &&
     (lastKeyPressed === `s` || lastKeyPressed === `ArrowDown`)
   ) {
-    if (shouldIncreaseSpeed) {
-      // backgroundSprite.position.y -= 10;
-      movablesList.forEach((movable) => (movable.position.y -= 10));
-    } else {
-      movablesList.forEach((movable) => (movable.position.y -= 5));
-      // backgroundSprite.position.y -= 5;
-    }
+    const getDisplacement =
+      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (movable) => {
+        let displacement = (movable.position.y -= byUnits.slow);
+        if (shouldIncreaseSpeed) {
+          displacement = movable.position.y -= byUnits.fast;
+        }
+        return displacement;
+      };
+    navigate({
+      boundaries,
+
+      movablesList,
+      shouldIncreaseSpeed,
+      playerSprite,
+      direction: "down",
+      getDisplacement,
+    });
+    // if (shouldIncreaseSpeed) {
+    //   // backgroundSprite.position.y -= 10;
+    //   movablesList.forEach((movable) => (movable.position.y -= 10));
+    // } else {
+    //   movablesList.forEach((movable) => (movable.position.y -= 5));
+    //   // backgroundSprite.position.y -= 5;
+    // }
   } else if (
     keys.leftNavigation.pressed &&
     (lastKeyPressed === `a` || lastKeyPressed === `ArrowLeft`)
   ) {
-    if (shouldIncreaseSpeed) {
-      movablesList.forEach((movable) => (movable.position.x += 10));
-      // backgroundSprite.position.x += 10;
-    } else {
-      movablesList.forEach((movable) => (movable.position.x += 5));
-      // backgroundSprite.position.x += 5;
-    }
+    const getDisplacement =
+      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (movable) => {
+        let displacement = (movable.position.x += byUnits.slow);
+        if (shouldIncreaseSpeed) {
+          displacement = movable.position.x += byUnits.fast;
+        }
+        return displacement;
+      };
+    navigate({
+      boundaries,
+      // playerColliding,
+      movablesList,
+      shouldIncreaseSpeed,
+      playerSprite,
+      direction: "left",
+      getDisplacement,
+    });
   } else if (
     keys.rightNavigation.pressed &&
     (lastKeyPressed === `d` || lastKeyPressed === `ArrowRight`)
   ) {
-    if (shouldIncreaseSpeed) {
-      movablesList.forEach((movable) => (movable.position.x -= 10));
-      // backgroundSprite.position.x -= 10;
-    } else {
-      movablesList.forEach((movable) => (movable.position.x -= 5));
-      // backgroundSprite.position.x -= 5;
-    }
+    const getDisplacement =
+      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (movable) => {
+        let displacement = (movable.position.x -= byUnits.slow);
+        if (shouldIncreaseSpeed) {
+          displacement = movable.position.x -= byUnits.fast;
+        }
+        return displacement;
+      };
+    navigate({
+      boundaries,
+      // playerColliding,
+      movablesList,
+      shouldIncreaseSpeed,
+      playerSprite,
+      direction: "right",
+      getDisplacement,
+    });
   }
 }
 
@@ -327,3 +358,99 @@ window.addEventListener("keyup", function (event) {
       console.log(`no function associated with the key `, event.key);
   }
 });
+
+function navigate({
+  boundaries,
+
+  shouldIncreaseSpeed,
+  movablesList,
+  playerSprite,
+  direction,
+  getDisplacement,
+  byUnits,
+}) {
+  let playerColliding = false;
+  for (let i = 0; i < boundaries.length; i++) {
+    if (playerColliding) {
+      break; // if player is colliding, then break out of the loop. We dont need to check with each other boundary if the player is colliding. At a time a player can only collide with one boundary and we have got that. So break.
+    } else {
+      const currentBoundary = boundaries[i];
+      let params = {};
+
+      switch (direction) {
+        case "up":
+          {
+            params = {
+              player: playerSprite,
+              boundary: {
+                ...currentBoundary,
+                position: {
+                  x: currentBoundary.position.x,
+                  y: currentBoundary.position.y + 5,
+                },
+              },
+            };
+          }
+          break;
+
+        case "down":
+          {
+            params = {
+              player: playerSprite,
+              boundary: {
+                ...currentBoundary,
+                position: {
+                  x: currentBoundary.position.x,
+                  y: currentBoundary.position.y - 15,
+                },
+              },
+            };
+          }
+          break;
+
+        case "left":
+          {
+            params = {
+              player: playerSprite,
+              boundary: {
+                ...currentBoundary,
+                position: {
+                  x: currentBoundary.position.x + 5,
+                  y: currentBoundary.position.y,
+                },
+              },
+            };
+          }
+          break;
+
+        case "right":
+          {
+            params = {
+              player: playerSprite,
+              boundary: {
+                ...currentBoundary,
+                position: {
+                  x: currentBoundary.position.x - 5,
+                  y: currentBoundary.position.y,
+                },
+              },
+            };
+          }
+          break;
+
+        default:
+          throw new Error("Direction to navigate not found ");
+      }
+      console.log({ params });
+      if (rectangularCollisions(params)) {
+        console.log("colliding");
+        playerColliding = true;
+        break;
+      }
+    }
+  }
+  if (!playerColliding) {
+    movablesList.forEach(getDisplacement(shouldIncreaseSpeed, byUnits));
+    // backgroundSprite.position.y += 10;
+  }
+}
