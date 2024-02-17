@@ -1,0 +1,27 @@
+{
+  "name": "pokemon",
+  "version": "1.0.0",
+  "description": "pokemon game built using vanilla js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "webpack serve --open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jainPrajwal/pokemon.git"
+  },
+  "author": "prajwal jain",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jainPrajwal/pokemon/issues"
+  },
+  "homepage": "https://github.com/jainPrajwal/pokemon#readme",
+  "type": "commonjs",
+  "devDependencies": {
+    "webpack": "^5.0.0",
+    "webpack-cli": "^4.0.0",
+    "webpack-dev-server": "^4.15.1"
+  }
+}

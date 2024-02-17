@@ -4,39 +4,33 @@ canvas.height = 576;
 const context = canvas.getContext("2d");
 
 const offset = {
-  x: -720,
-  y: -600,
+  x: -740,
+  y: -640,
 };
-
-class Boundary {
-  static width = 48;
-  static height = 48;
-  constructor(position) {
-    this.position = position;
-    this.width = Boundary.width; // Initializing this width is important
-    this.height = Boundary.height;
-  }
-
-  draw() {
-    context.fillStyle = `red`;
-    context.fillRect(
-      this.position.x,
-      this.position.y,
-      Boundary.width,
-      Boundary.height
-    );
-  }
-}
 
 /**
  * i + 70, because our map is 70 tiles wide
  */
 
 let collisionsMap = [];
-for (let i = 0; i < Collisions.length; i = i + 70) {
-  const slicedArray = Collisions.slice(i, 70 + i);
+/**
+ * i + 70, because our map is 70 tiles wide
+ * this will be an array of arrays
+ */
+const battleZonesMap = [];
+for (let i = 0; i < COLLISIONS_DATA.length; i = i + 70) {
+  const slicedArray = COLLISIONS_DATA.slice(i, 70 + i);
   collisionsMap.push(slicedArray);
 }
+
+// get the rectangle in which we want our player to activate the battle
+for (let i = 0; i < BATTLE_ZONES_DATA.length; i = i + 70) {
+  const slicedArray = BATTLE_ZONES_DATA.slice(i, 70 + i);
+  battleZonesMap.push(slicedArray);
+}
+
+// start pushing in battle zone tiles into battlezones array
+
 const boundaries = [];
 
 collisionsMap.forEach((row, i) => {
@@ -53,10 +47,39 @@ collisionsMap.forEach((row, i) => {
   });
 });
 
+const battleZones = [];
+
+battleZonesMap.forEach((row, i) => {
+  row.forEach((symbol, j) => {
+    // === 1025 because in the collisions array wherever there is 1025 it resembles a boundary
+    if (symbol === 1025) {
+      battleZones.push(
+        new Boundary({
+          x: j * Boundary.width + offset.x, // Boundary.width because 48 is the width of eac collision as weh have mentiond in Boundary class
+          y: i * Boundary.height + offset.y,
+        })
+      );
+    }
+  });
+});
+
 const pelletTownImageSource = new Image();
 pelletTownImageSource.src = `./images/Pellet Town Zoomed.png`;
-const playerImage = new Image();
-playerImage.src = "./images/playerDown.png";
+
+const playerDownImage = new Image();
+playerDownImage.src = "./images/playerDown.png";
+
+const playerUpImage = new Image();
+playerUpImage.src = "./images/playerUp.png";
+
+const playerLeftImage = new Image();
+playerLeftImage.src = "./images/playerLeft.png";
+
+const playerRightImage = new Image();
+playerRightImage.src = "./images/playerRight.png";
+
+const foregroundImage = new Image();
+foregroundImage.src = "./images/foregroundObjects.png";
 
 let lastKeyPressed = null;
 let shouldIncreaseSpeed = false;
@@ -84,51 +107,20 @@ const keys = {
  * Create a new function animate
  */
 
-class Sprite {
-  /**
-   *
-   * @param {position: {x: number, y: number}, velocity: number, image: any, frames: number }
-   * @description frames params means how many frames in a sprite SVG. We have 4 frames in a sprite SVG for player image.
-   * @default {..., frames: {max: 1}}
-   */
-  constructor({ position, velocity, image, frames = { max: 1 } }) {
-    this.position = position;
-    this.velocity = velocity;
-    this.image = image;
-    this.frames = frames;
-    // make sure that the image is loaded before we start rendering it
-    this.image.onload = () => {
-      this.width = this.image.width / this.frames.max;
-      this.height = this.image.height;
-      console.log(this.image.width, this.image.height);
-    };
-  }
-
-  //
-  draw() {
-    // context.drawImage(this.image, this.position.x, this.position.y);
-    context.drawImage(
-      this.image,
-      0, // from left corner
-      0, // from top corner
-      this.image.width / this.frames.max, // since we have 4 images in sprite and each of them has same width, we divide the  width by 4, since we are making it generic now we cant divide it by 4
-      this.image.height, // we want the full height of the original image in the sprite
-      this.position.x,
-      this.position.y,
-      this.image.width / this.frames.max, // what should be the width of the rendered image
-      this.image.height // what should be the height of the rendered image
-    );
-  }
-}
-
 const playerSprite = new Sprite({
   position: {
     x: canvas.width / 2 - 192 / 4 / 2, // start rendering the image in canvas from middle of the canvas screen
     y: canvas.height / 2 - 68 / 2,
   },
-  image: playerImage,
+  image: playerDownImage,
   frames: {
     max: 4,
+  },
+  sprites: {
+    up: playerUpImage,
+    down: playerDownImage,
+    left: playerLeftImage,
+    right: playerRightImage,
   },
 });
 
@@ -140,13 +132,26 @@ const backgroundSprite = new Sprite({
   image: pelletTownImageSource,
 });
 
+const foregroundSprite = new Sprite({
+  position: {
+    x: offset.x,
+    y: offset.y,
+  },
+  image: foregroundImage,
+});
+
 // const testBoundary = new Boundary({
 //   x: 400,
 //   y: 400,
 // });
 
 // const movablesList = [backgroundSprite, testBoundary];
-const movablesList = [backgroundSprite, ...boundaries];
+const movablesList = [
+  backgroundSprite,
+  ...boundaries,
+  foregroundSprite,
+  ...battleZones,
+];
 
 function detectRectangularCollisions({ player, boundary }) {
   // Player Coords
@@ -178,15 +183,19 @@ function detectRectangularCollisions({ player, boundary }) {
 
   return areTwoObjectsColliding;
 }
-function rectangularCollisions({ player, boundary }) {
-  return (
-    player.position.x + player.width >= boundary.position.x &&
-    player.position.x <= boundary.position.x + boundary.width &&
-    player.position.y <= boundary.position.y + boundary.height &&
-    player.position.y + player.height >= boundary.position.y
-  );
-}
 
+// function rectangularCollision({ player, boundary }) {
+//   return (
+//     player.position.x + player.width >= boundary.position.x &&
+//     player.position.x <= boundary.position.x + boundary.width &&
+//     player.position.y <= boundary.position.y + boundary.height &&
+//     player.position.y + player.height >= boundary.position.y
+//   )
+// }
+
+const battle = {
+  initiated: false,
+};
 function animate() {
   requestAnimationFrame(animate);
 
@@ -196,35 +205,95 @@ function animate() {
     boundary.draw();
   });
   // testBoundary.draw();
+
+  battleZones.forEach((battleZone) => {
+    battleZone.draw();
+  });
   playerSprite.draw();
-  let playerColliding = false;
+  playerSprite.moving = false;
+  foregroundSprite.draw();
+
+  if (battle.initiated) {
+    console.debug("BATTLE IS INITIATED");
+    return;
+  }
+
+  if (
+    keys.upNavigation.pressed ||
+    keys.downNavigation.pressed ||
+    keys.leftNavigation.pressed ||
+    keys.rightNavigation.pressed
+  ) {
+    for (let i = 0; i < battleZones.length; i++) {
+      const battleZone = battleZones[i];
+      const leftSideOfPlayer = playerSprite.position.x;
+      const rightSideOfPlayer = leftSideOfPlayer + playerSprite.width;
+      const leftSideOfBattleTile = battleZone.position.x;
+      const rightSideOfBattleTile = leftSideOfBattleTile + battleZone.width;
+
+      const interSectingAreaWidth =
+        Math.min(rightSideOfPlayer, rightSideOfBattleTile) -
+        Math.max(leftSideOfPlayer, leftSideOfBattleTile);
+
+      const playerTop = playerSprite.position.y;
+      const playerBottom = playerSprite.position.y + playerSprite.height;
+      const battleZoneTop = battleZone.position.y;
+      const battleZoneBottom = battleZone.position.y + battleZone.height;
+
+      const interSectingAreaHeight =
+        Math.min(playerBottom, battleZoneBottom) -
+        Math.max(playerTop, battleZoneTop);
+
+      const overlappingArea = interSectingAreaWidth * interSectingAreaHeight;
+
+      const playerArea = playerSprite.width * playerSprite.height;
+      const fractionOfBattleActivation = 0.03;
+      const moreThanHalfOfPlayerIsInBattleZone =
+        overlappingArea > playerArea / 2;
+      const colliding = detectRectangularCollisions({
+        player: playerSprite,
+        boundary: battleZone,
+      });
+      const initiateBattle =
+        colliding &&
+        moreThanHalfOfPlayerIsInBattleZone &&
+        Math.random() < fractionOfBattleActivation;
+
+      if (initiateBattle) {
+        console.debug("INITIATING BATTLE");
+        battle.initiated = true;
+        break;
+      }
+    }
+  }
   if (
     keys.upNavigation.pressed &&
     (lastKeyPressed === `w` || lastKeyPressed === `ArrowUp`)
   ) {
+    playerSprite.moving = true;
+    playerSprite.image = playerSprite.sprites.up;
     const getDisplacement =
-      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (byUnits = { slow: 5, fast: 10 }) =>
       (movable) => {
-        let displacement = (movable.position.y += byUnits.slow);
-        if (shouldIncreaseSpeed) {
-          displacement = movable.position.y += byUnits.fast;
-        }
+        const displacement = (movable.position.y += byUnits.slow);
         return displacement;
       };
     navigate({
       boundaries,
       movablesList,
-      shouldIncreaseSpeed,
       playerSprite,
       direction: "up",
       getDisplacement,
+      battleInitiated: battle.initiated,
     });
   } else if (
     keys.downNavigation.pressed &&
     (lastKeyPressed === `s` || lastKeyPressed === `ArrowDown`)
   ) {
+    playerSprite.moving = true;
+    playerSprite.image = playerSprite.sprites.down;
     const getDisplacement =
-      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (byUnits = { slow: 5, fast: 10 }) =>
       (movable) => {
         let displacement = (movable.position.y -= byUnits.slow);
         if (shouldIncreaseSpeed) {
@@ -234,13 +303,13 @@ function animate() {
       };
     navigate({
       boundaries,
-
       movablesList,
-      shouldIncreaseSpeed,
       playerSprite,
       direction: "down",
       getDisplacement,
+      battleInitiated: battle.initiated,
     });
+
     // if (shouldIncreaseSpeed) {
     //   // backgroundSprite.position.y -= 10;
     //   movablesList.forEach((movable) => (movable.position.y -= 10));
@@ -252,8 +321,10 @@ function animate() {
     keys.leftNavigation.pressed &&
     (lastKeyPressed === `a` || lastKeyPressed === `ArrowLeft`)
   ) {
+    playerSprite.moving = true;
+    playerSprite.image = playerSprite.sprites.left;
     const getDisplacement =
-      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (byUnits = { slow: 5, fast: 10 }) =>
       (movable) => {
         let displacement = (movable.position.x += byUnits.slow);
         if (shouldIncreaseSpeed) {
@@ -265,17 +336,19 @@ function animate() {
       boundaries,
       // playerColliding,
       movablesList,
-      shouldIncreaseSpeed,
       playerSprite,
       direction: "left",
       getDisplacement,
+      battleInitiated: battle.initiated,
     });
   } else if (
     keys.rightNavigation.pressed &&
     (lastKeyPressed === `d` || lastKeyPressed === `ArrowRight`)
   ) {
+    playerSprite.moving = true;
+    playerSprite.image = playerSprite.sprites.right;
     const getDisplacement =
-      (shouldIncreaseSpeed, byUnits = { slow: 5, fast: 10 }) =>
+      (byUnits = { slow: 5, fast: 10 }) =>
       (movable) => {
         let displacement = (movable.position.x -= byUnits.slow);
         if (shouldIncreaseSpeed) {
@@ -287,10 +360,10 @@ function animate() {
       boundaries,
       // playerColliding,
       movablesList,
-      shouldIncreaseSpeed,
       playerSprite,
       direction: "right",
       getDisplacement,
+      battleInitiated: battle.initiated,
     });
   }
 }
@@ -325,8 +398,9 @@ window.addEventListener("keydown", function (event) {
       keys.rightNavigation.pressed = true;
       break;
 
-    case `Shift`:
-      shouldIncreaseSpeed = true;
+    // case `Shift`:
+    //   shouldIncreaseSpeed = true;
+    //   break;
     default:
       console.log(`no function associated with the key `, event.key);
   }
@@ -352,8 +426,9 @@ window.addEventListener("keyup", function (event) {
       keys.rightNavigation.pressed = false;
       break;
 
-    case `Shift`:
-      shouldIncreaseSpeed = false;
+    // case `Shift`:
+    //   shouldIncreaseSpeed = false;
+    //   break;
     default:
       console.log(`no function associated with the key `, event.key);
   }
@@ -361,14 +436,16 @@ window.addEventListener("keyup", function (event) {
 
 function navigate({
   boundaries,
-
-  shouldIncreaseSpeed,
   movablesList,
   playerSprite,
   direction,
   getDisplacement,
   byUnits,
+  battleInitiated,
 }) {
+  if (battleInitiated) {
+    return;
+  }
   let playerColliding = false;
   for (let i = 0; i < boundaries.length; i++) {
     if (playerColliding) {
@@ -441,8 +518,7 @@ function navigate({
         default:
           throw new Error("Direction to navigate not found ");
       }
-      console.log({ params });
-      if (rectangularCollisions(params)) {
+      if (detectRectangularCollisions(params)) {
         console.log("colliding");
         playerColliding = true;
         break;
@@ -450,7 +526,7 @@ function navigate({
     }
   }
   if (!playerColliding) {
-    movablesList.forEach(getDisplacement(shouldIncreaseSpeed, byUnits));
+    movablesList.forEach(getDisplacement(byUnits));
     // backgroundSprite.position.y += 10;
   }
 }
