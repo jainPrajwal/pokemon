@@ -3,7 +3,7 @@ class Sprite {
    *
    * @param {position: {x: number, y: number}, velocity: number, image: any, frames: number }
    * @description frames params means how many frames in a sprite SVG. We have 4 frames in a sprite SVG for player image.
-   * @default
+   * @default 
    */
   constructor({
     position,
