@@ -3,14 +3,15 @@ class Sprite {
    *
    * @param {position: {x: number, y: number}, velocity: number, image: any, frames: number }
    * @description frames params means how many frames in a sprite SVG. We have 4 frames in a sprite SVG for player image.
-   * @default 
+   * @default
    */
   constructor({
     position,
     velocity,
     image,
-    frames = { max: 1, current: 0, elapsed: 0 },
+    frames = { max: 1, current: 0, elapsed: 0, hold: 10 },
     sprites = {},
+    animate = false,
   }) {
     this.position = position;
     this.velocity = velocity;
@@ -22,7 +23,7 @@ class Sprite {
       this.height = this.image.height;
       console.log("heloooooooo", this.image.width, this.image.height);
     };
-    this.moving = false;
+    this.animate = animate;
     this.sprites = sprites;
   }
 
@@ -41,12 +42,12 @@ class Sprite {
       this.image.height // what should be the height of the rendered image
     );
 
-    if (!this.moving) return;
+    if (!this.animate) return;
     if (this.frames.max > 1) {
       this.frames.elapsed++;
     }
 
-    if (this.frames.elapsed % 10 === 0) {
+    if (this.frames.elapsed % this.frames.hold === 0) {
       if (this.frames.current < this.frames.max - 1) {
         this.frames.current++;
       } else {
@@ -66,7 +67,7 @@ class Boundary {
   }
 
   draw() {
-    context.fillStyle = `red`;
+    context.fillStyle = `rgba(0, 0, 0, 0)`;
     context.fillRect(
       this.position.x,
       this.position.y,

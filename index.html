@@ -5,7 +5,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Pokemon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"
+        integrity="sha512-f6bQMg6nkSRw/xfHw5BCbISe/dJjXrVGfz9BSDwhZtiErHwk7ifbmBEtF9vFW8UNIQPhV2uEFVyI/UHob9r7Cw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="style.css">
     <script src="./data/battleZones.js"></script>
     <script src="./data/collisions.js" defer></script>
@@ -13,8 +19,37 @@
     <script src="./index.js" defer></script>
 </head>
 
+
+
 <body>
-    <canvas class="canvas"></canvas>
+    <!-- container -->
+    <div style="display: inline-block; position: relative;">
+        <!-- rectangle that contains entire width and height -->
+        <div id="overlapping-div"
+            style="background-color: black; position: absolute;  top: 0; left: 0; right: 0; bottom:0; opacity: 0; pointer-events: none;">
+        </div>
+        <canvas class="canvas"></canvas>
+
+        <!-- interface -->
+        <div style="background-color: #fff;  height: 150px; position: absolute; bottom:0; left:0; right:0;
+        border-top: 4px #000 solid;
+        display: flex;
+        flex-direction: row;
+        flex:1;    
+        ">
+            <!-- attacks -->
+            <div style="display: grid; flex:1; grid-template-columns: repeat(2,1fr); ">
+                <button class="attack-btn">Attack 1</button>
+                <button class="attack-btn">Attack 2</button>
+                <button class="attack-btn">Attack 3</button>
+                <button class="attack-btn">Attack 4</button>
+            </div>
+            <div
+                style="display: flex; flex: 0.40; align-items: center; justify-content: center; border-left: 4px #000 solid">
+                <p style="font-size: large;">Attack Type</p>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

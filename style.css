@@ -2,13 +2,30 @@
     box-sizing: border-box;
     padding: 0;
     margin: 0;
+    font-family: "Press Start 2P", system-ui;
 }
 
 body {
     overflow: hidden;
+
 }
 
 .canvas {
     /* width: 150%; */
+
+}
+
+.attack-btn {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    border: 0px;
+    font-size: small;
+}
+
+.attack-btn:hover {
+    background-color: #ddd;
+    cursor: pointer;
 
 }

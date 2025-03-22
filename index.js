@@ -1,4 +1,6 @@
 const canvas = document.querySelector(`canvas`);
+console.log("gsap", gsap);
+
 canvas.width = 1024;
 canvas.height = 576;
 const context = canvas.getContext("2d");
@@ -115,6 +117,7 @@ const playerSprite = new Sprite({
   image: playerDownImage,
   frames: {
     max: 4,
+    hold: 10,
   },
   sprites: {
     up: playerUpImage,
@@ -184,20 +187,21 @@ function detectRectangularCollisions({ player, boundary }) {
   return areTwoObjectsColliding;
 }
 
-// function rectangularCollision({ player, boundary }) {
-//   return (
-//     player.position.x + player.width >= boundary.position.x &&
-//     player.position.x <= boundary.position.x + boundary.width &&
-//     player.position.y <= boundary.position.y + boundary.height &&
-//     player.position.y + player.height >= boundary.position.y
-//   )
-// }
+function rectangularCollision({ player, boundary }) {
+  return (
+    player.position.x + player.width >= boundary.position.x &&
+    player.position.x <= boundary.position.x + boundary.width &&
+    player.position.y <= boundary.position.y + boundary.height &&
+    player.position.y + player.height >= boundary.position.y
+  );
+}
 
 const battle = {
   initiated: false,
 };
+
 function animate() {
-  requestAnimationFrame(animate);
+  const animationId = requestAnimationFrame(animate);
 
   backgroundSprite.draw();
 
@@ -210,7 +214,7 @@ function animate() {
     battleZone.draw();
   });
   playerSprite.draw();
-  playerSprite.moving = false;
+  playerSprite.animate = false;
   foregroundSprite.draw();
 
   if (battle.initiated) {
@@ -261,7 +265,28 @@ function animate() {
 
       if (initiateBattle) {
         console.debug("INITIATING BATTLE");
+        // deactivate  current animation loop
+        window.cancelAnimationFrame(animationId);
         battle.initiated = true;
+        gsap.to("#overlapping-div", {
+          opacity: 1,
+          repeat: 3,
+          yoyo: true,
+          duration: 0.4,
+          onComplete: () => {
+            gsap.to("#overlapping-div", {
+              opacity: 1,
+              duration: 0.4,
+            });
+
+            // activate a new animation
+            animateBattle();
+            gsap.to("#overlapping-div", {
+              opacity: 0,
+              duration: 0.4,
+            });
+          },
+        });
         break;
       }
     }
@@ -270,7 +295,7 @@ function animate() {
     keys.upNavigation.pressed &&
     (lastKeyPressed === `w` || lastKeyPressed === `ArrowUp`)
   ) {
-    playerSprite.moving = true;
+    playerSprite.animate = true;
     playerSprite.image = playerSprite.sprites.up;
     const getDisplacement =
       (byUnits = { slow: 5, fast: 10 }) =>
@@ -290,7 +315,7 @@ function animate() {
     keys.downNavigation.pressed &&
     (lastKeyPressed === `s` || lastKeyPressed === `ArrowDown`)
   ) {
-    playerSprite.moving = true;
+    playerSprite.animate = true;
     playerSprite.image = playerSprite.sprites.down;
     const getDisplacement =
       (byUnits = { slow: 5, fast: 10 }) =>
@@ -321,7 +346,7 @@ function animate() {
     keys.leftNavigation.pressed &&
     (lastKeyPressed === `a` || lastKeyPressed === `ArrowLeft`)
   ) {
-    playerSprite.moving = true;
+    playerSprite.animate = true;
     playerSprite.image = playerSprite.sprites.left;
     const getDisplacement =
       (byUnits = { slow: 5, fast: 10 }) =>
@@ -345,7 +370,7 @@ function animate() {
     keys.rightNavigation.pressed &&
     (lastKeyPressed === `d` || lastKeyPressed === `ArrowRight`)
   ) {
-    playerSprite.moving = true;
+    playerSprite.animate = true;
     playerSprite.image = playerSprite.sprites.right;
     const getDisplacement =
       (byUnits = { slow: 5, fast: 10 }) =>
@@ -368,7 +393,55 @@ function animate() {
   }
 }
 
-animate();
+const battleBackgroundImage = new Image();
+battleBackgroundImage.src = "./images/battleBackground.png";
+const battleBackgroundSprite = new Sprite({
+  position: {
+    x: 0,
+    y: 0,
+  },
+  image: battleBackgroundImage,
+});
+
+const charmanderImage = new Image();
+charmanderImage.src = "./images/charmander.png";
+const charmanderSprite = new Sprite({
+  position: {
+    x: 270,
+    y: 325,
+  },
+  image: charmanderImage,
+  frames: {
+    max: 4,
+    hold: 30,
+  },
+  animate: true,
+});
+
+const bulbasaurImage = new Image();
+bulbasaurImage.src = "./images/bulbasaur.png";
+const bulbasaurSprite = new Sprite({
+  position: {
+    x: 800,
+    y: 100,
+  },
+  image: bulbasaurImage,
+  frames: {
+    max: 4,
+    hold: 30,
+  },
+  animate: true,
+});
+function animateBattle() {
+  window.requestAnimationFrame(animateBattle);
+  console.log("animating battle");
+  battleBackgroundSprite.draw();
+  charmanderSprite.draw();
+  bulbasaurSprite.draw();
+}
+
+// animate();
+animateBattle();
 
 // When the key is pressed, we need to move the player. So we need to set the pressed property of the respective key to true
 window.addEventListener("keydown", function (event) {
@@ -527,6 +600,5 @@ function navigate({
   }
   if (!playerColliding) {
     movablesList.forEach(getDisplacement(byUnits));
-    // backgroundSprite.position.y += 10;
   }
 }
